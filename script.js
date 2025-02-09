@@ -1,132 +1,111 @@
-let score = 0;
-let streak = 0;
-let targetColor;
-let lastChoice = null;
-let colorOptions = [];
-let mindGameMode = false;
-let timer;
-let roundTime = 5000;
+document.addEventListener("DOMContentLoaded", () => {
+    const colorOptions = document.getElementById("colorOptions");
+    const scoreDisplay = document.getElementById("score");
+    const message = document.getElementById("message");
+    const startButton = document.getElementById("startButton");
+    const highScoreDisplay = document.createElement("div");
+    highScoreDisplay.id = "highScore";
+    highScoreDisplay.textContent = "High Score: 0";
+    scoreDisplay.parentNode.insertBefore(highScoreDisplay, scoreDisplay.nextSibling);
 
-const colorBox = document.getElementById('colorBox');
-const colorOptionsContainer = document.getElementById('colorOptions');
-const gameStatus = document.getElementById('gameStatus');
-const scoreDisplay = document.getElementById('score');
-const newGameButton = document.getElementById('newGameButton');
-const mindGameButton = document.getElementById('mindGameMode');
+    let score = 0;
+    let highScore = 0;
+    let currentColor = null;
+    let gameActive = false;
+    let hintGiven = false;
 
-function randomRGB() {
-    return `rgb(${rand255()}, ${rand255()}, ${rand255()})`;
-}
+    const generateRandomColor = () => {
+        const hex = "0123456789ABCDEF";
+        return "#" + Array.from({ length: 6 }, () => hex[Math.floor(Math.random() * 16)]).join("");
+    };
 
-function rand255() {
-    return Math.floor(Math.random() * 256);
-}
+    const generateColors = (targetColor) => {
+        let colors = new Set([targetColor]);
+        while (colors.size < 6) colors.add(generateRandomColor());
+        return [...colors].sort(() => Math.random() - 0.5);
+    };
 
-function generateColorOptions() {
-    clearTimeout(timer);
-    colorOptions = [];
+    const getColorHint = (color) => {
+        const r = parseInt(color.slice(1, 3), 16);
+        const g = parseInt(color.slice(3, 5), 16);
+        const b = parseInt(color.slice(5, 7), 16);
 
-    for (let i = 0; i < 6; i++) {
-        let color = randomRGB();
-        colorOptions.push(color);
-    }
+        let hints = [];
+        if (r > 200) hints.push("Think fire, think destruction, think... spicy red!");
+        if (g > 200) hints.push("Green like interdimensional goo. Or toxic waste. Probably both.");
+        if (b > 200) hints.push("As blue as a portal to another dimension. Or crippling existential crisis.");
+        if (hints.length === 0) hints.push("Even I have no clue what this shade is. Good luck, genius.");
+        
+        return hints.join(" ");
+    };
 
-    const targetIndex = Math.floor(Math.random() * 6);
-    targetColor = colorOptions[targetIndex];
+    const handleColorClick = (selectedColor) => {
+        if (!gameActive) return;
 
-    colorBox.style.backgroundColor = targetColor;
-    colorBox.classList.add('animate');
-    setTimeout(() => colorBox.classList.remove('animate'), 300);
+        if (selectedColor === currentColor) {
+            score++;
+            if (score > highScore) highScore = score;
+            scoreDisplay.textContent = `Score: ${score}`;
+            highScoreDisplay.textContent = `High Score: ${highScore}`;
+            message.textContent = "Whoa! You actually got it right. I'm almost impressed.";
+            message.className = "success";
+            hintGiven = false;
+            setTimeout(startRound, 1500);
+        } else if (!hintGiven) {
+            message.textContent = `Nope! But hey, here's a hint: ${getColorHint(currentColor)}`;
+            message.className = "warning";
+            hintGiven = true;
+        } else {
+            message.textContent = `Wow, still wrong? Game Over! Final Score: ${score}. Maybe try paying attention next time.`;
+            message.className = "error";
+            gameActive = false;
+            startButton.textContent = "Give it another shot";
+            startButton.style.display = "block";
+            hintGiven = false;
 
-    colorOptionsContainer.innerHTML = '';
-    colorOptions.forEach(color => {
-        const colorOption = document.createElement('div');
-        colorOption.classList.add('color-option');
-        colorOption.style.backgroundColor = mindGameMode ? tweakColor(color) : color;
-        colorOption.addEventListener('click', () => checkGuess(color));
-        colorOptionsContainer.appendChild(colorOption);
-    });
+            // Make the correct color hover/levitate
+            document.querySelectorAll(".color-option").forEach(button => {
+                if (button.style.backgroundColor.toUpperCase() === currentColor.toUpperCase()) {
+                    button.style.animation = "levitate 1.5s infinite alternate";
+                }
+            });
+        }
+    };
 
-    startTimer();
-}
+    const startRound = () => {
+        currentColor = generateRandomColor();
+        message.textContent = "Alright, pick a color. Don't screw this up.";
+        message.className = "";
+        colorOptions.innerHTML = "";
 
-function tweakColor(color) {
-    let rgb = color.match(/\d+/g);
-    return `rgb(${Math.max(0, rgb[0] - 20)}, ${Math.max(0, rgb[1] - 20)}, ${Math.max(0, rgb[2] - 20)})`;
-}
+        generateColors(currentColor).forEach(color => {
+            let button = document.createElement("button");
+            button.className = "color-option";
+            button.style.backgroundColor = color;
+            button.setAttribute("data-testid", "colorOption");
+            button.onclick = () => handleColorClick(color);
+            colorOptions.appendChild(button);
+        });
+    };
 
-function checkGuess(selectedColor) {
-    clearTimeout(timer);
-    
-    if (selectedColor === lastChoice) {
-        score -= 5;
-        gameStatus.textContent = "You think you're smart? -5 points!";
-        gameStatus.classList.remove('correct');
-        gameStatus.classList.add('wrong');
-    } else if (selectedColor === targetColor) {
-        streak++;
-        let points = streak * 10;
-        score += points;
-        gameStatus.textContent = `Correct! +${points} points`;
-        gameStatus.classList.remove('wrong');
-        gameStatus.classList.add('correct');
-        increaseDifficulty();
-    } else {
-        streak = 0;
-        score -= 10;
-        gameStatus.textContent = getRandomInsult();
-        gameStatus.classList.remove('correct');
-        gameStatus.classList.add('wrong');
-    }
-    
-    scoreDisplay.textContent = score;
-    lastChoice = selectedColor;
-    generateColorOptions();
-}
+    const startGame = () => {
+        score = 0;
+        gameActive = true;
+        scoreDisplay.textContent = "Score: 0";
+        startButton.style.display = "none";
+        hintGiven = false;
+        startRound();
+    };
 
-function getRandomInsult() {
-    const insults = [
-        "Bro... you serious?",
-        "I've seen pigeons with better color perception.",
-        "Maybe take off your sunglasses?",
-        "This ain't it, chief.",
-        "Colorblind mode isn't on, you just suck.",
-    ];
-    return insults[Math.floor(Math.random() * insults.length)];
-}
+    startButton.addEventListener("click", startGame);
 
-function increaseDifficulty() {
-    if (streak % 3 === 0 && roundTime > 2000) {
-        roundTime -= 500;
-    }
-}
-
-function startTimer() {
-    timer = setTimeout(() => {
-        score -= 10;
-        gameStatus.textContent = "Too slow! -10 points.";
-        gameStatus.classList.remove('correct');
-        gameStatus.classList.add('wrong');
-        scoreDisplay.textContent = score;
-        generateColorOptions();
-    }, roundTime);
-}
-
-function newGame() {
-    score = 0;
-    streak = 0;
-    roundTime = 5000;
-    scoreDisplay.textContent = score;
-    gameStatus.textContent = '';
-    lastChoice = null;
-    generateColorOptions();
-}
-
-mindGameButton.addEventListener('click', () => {
-    mindGameMode = !mindGameMode;
-    mindGameButton.textContent = mindGameMode ? "Mind Game Mode: ON" : "Mind Game Mode: OFF";
-    generateColorOptions();
+    // Add levitate animation style
+    const style = document.createElement("style");
+    style.textContent = `
+        @keyframes levitate {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+    `;
+    document.head.appendChild(style);
 });
-
-newGameButton.addEventListener('click', newGame);
-newGame();

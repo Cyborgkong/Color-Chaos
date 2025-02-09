@@ -3,29 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Color Game</title>
+    <title>Color Memory Game</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1 class="title">COLOR GAME <span class="rick-adam-mode">[Adam Mode]</span></h1>
-        
-        <p id="gameInstructions" class="instructions">Guess the color. No second chances. No mistakes. No mercy.</p>
-
-        <div id="colorBox" class="color-box" data-testid="colorBox"></div>
-
-        <div id="colorOptions" class="color-options"></div>
-
-        <p id="gameStatus" class="game-status" data-testid="gameStatus"></p>
-
-        <div class="score-container">
-            <span>Score:</span> <span id="score" data-testid="score">0</span>
-        </div>
-
-        <div class="buttons">
-            <button id="newGameButton" class="btn" data-testid="newGameButton">Reset Game</button>
-            <button id="mindGameMode" class="btn mind-mode">Mind Game Mode: OFF</button>
-        </div>
+        <h1 data-testid="game-title">Color Memory Game</h1>
+        <div id="score" data-testid="score">Score: 0</div>
+        <div id="message" data-testid="gameInstructions">Press Start to begin!</div>
+        <div id="targetColor" data-testid="colorBox"></div>
+        <div id="colorOptions" data-testid="colorOptions"></div>
+        <button id="startButton" data-testid="newGameButton">Start Game</button>
     </div>
 
     <script src="script.js"></script>
