@@ -63,7 +63,6 @@ document.addEventListener("DOMContentLoaded", () => {
             startButton.style.display = "block";
             hintGiven = false;
 
-            // Make the correct color hover/levitate
             document.querySelectorAll(".color-option").forEach(button => {
                 if (button.style.backgroundColor.toUpperCase() === currentColor.toUpperCase()) {
                     button.style.animation = "levitate 1.5s infinite alternate";
@@ -99,7 +98,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     startButton.addEventListener("click", startGame);
 
-    // Add levitate animation style
     const style = document.createElement("style");
     style.textContent = `
         @keyframes levitate {
